@@ -288,6 +288,205 @@ async function connectToWhatsApp() {
     return sock;
 }
 
+// Adicione após os outros endpoints (depois de /stats)
+
+// ========================================
+// ENDPOINT: VISUALIZAR LOGS
+// ========================================
+const logHistory = []; // Array para armazenar logs em memória
+const MAX_LOG_HISTORY = 500; // Máximo de logs mantidos
+
+// Intercepta logs do pino
+const originalInfo = logger.info.bind(logger);
+const originalWarn = logger.warn.bind(logger);
+const originalError = logger.error.bind(logger);
+
+logger.info = function(...args) {
+    addToLogHistory('INFO', args);
+    return originalInfo(...args);
+};
+
+logger.warn = function(...args) {
+    addToLogHistory('WARN', args);
+    return originalWarn(...args);
+};
+
+logger.error = function(...args) {
+    addToLogHistory('ERROR', args);
+    return originalError(...args);
+};
+
+function addToLogHistory(level, args) {
+    const logEntry = {
+        timestamp: new Date().toISOString(),
+        level: level,
+        message: args.join(' ')
+    };
+    
+    logHistory.push(logEntry);
+    
+    // Mantém apenas os últimos MAX_LOG_HISTORY logs
+    if (logHistory.length > MAX_LOG_HISTORY) {
+        logHistory.shift();
+    }
+}
+
+// Endpoint para visualizar logs
+app.get('/logs', (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    const level = req.query.level; // Filtro opcional: INFO, WARN, ERROR
+    
+    let filteredLogs = logHistory;
+    
+    if (level) {
+        filteredLogs = logHistory.filter(log => log.level === level.toUpperCase());
+    }
+    
+    const recentLogs = filteredLogs.slice(-limit);
+    
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>📊 Logs - WhatsApp Captador</title>
+            <meta http-equiv="refresh" content="10">
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    font-family: 'Courier New', monospace; 
+                    background: #1e1e1e; 
+                    color: #d4d4d4; 
+                    padding: 20px; 
+                }
+                .header { 
+                    background: #252526; 
+                    padding: 20px; 
+                    border-radius: 8px; 
+                    margin-bottom: 20px; 
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .header h1 { color: #fff; font-size: 24px; }
+                .filters { display: flex; gap: 10px; }
+                .filters a { 
+                    padding: 8px 15px; 
+                    background: #0e639c; 
+                    color: white; 
+                    text-decoration: none; 
+                    border-radius: 4px; 
+                    font-size: 14px;
+                }
+                .filters a:hover { background: #1177bb; }
+                .filters a.active { background: #16825d; }
+                .log-container { 
+                    background: #252526; 
+                    padding: 20px; 
+                    border-radius: 8px; 
+                    max-height: 80vh; 
+                    overflow-y: auto; 
+                }
+                .log-entry { 
+                    padding: 8px 0; 
+                    border-bottom: 1px solid #3e3e42; 
+                    font-size: 13px;
+                    line-height: 1.6;
+                }
+                .log-entry:last-child { border-bottom: none; }
+                .timestamp { color: #858585; margin-right: 10px; }
+                .level { 
+                    display: inline-block; 
+                    padding: 2px 8px; 
+                    border-radius: 3px; 
+                    font-weight: bold; 
+                    margin-right: 10px;
+                    font-size: 11px;
+                }
+                .level.INFO { background: #0e639c; color: white; }
+                .level.WARN { background: #d19a66; color: #1e1e1e; }
+                .level.ERROR { background: #e06c75; color: white; }
+                .message { color: #d4d4d4; }
+                .auto-refresh { 
+                    color: #858585; 
+                    font-size: 12px; 
+                    margin-top: 10px;
+                }
+                .stats {
+                    display: flex;
+                    gap: 20px;
+                    margin-bottom: 10px;
+                    font-size: 14px;
+                }
+                .stat { color: #858585; }
+                .stat strong { color: #fff; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div>
+                    <h1>📊 Logs em Tempo Real</h1>
+                    <div class="stats">
+                        <span class="stat">Total: <strong>${logHistory.length}</strong></span>
+                        <span class="stat">Exibindo: <strong>${recentLogs.length}</strong></span>
+                    </div>
+                </div>
+                <div class="filters">
+                    <a href="/logs?limit=50" ${!level && limit === 50 ? 'class="active"' : ''}>Últimos 50</a>
+                    <a href="/logs?limit=100" ${!level && limit === 100 ? 'class="active"' : ''}>Últimos 100</a>
+                    <a href="/logs?limit=500" ${!level && limit === 500 ? 'class="active"' : ''}>Últimos 500</a>
+                    <a href="/logs?level=ERROR&limit=100" ${level === 'ERROR' ? 'class="active"' : ''}>Apenas Erros</a>
+                    <a href="/logs?level=WARN&limit=100" ${level === 'WARN' ? 'class="active"' : ''}>Apenas Avisos</a>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                ${recentLogs.reverse().map(log => `
+                    <div class="log-entry">
+                        <span class="timestamp">${new Date(log.timestamp).toLocaleString('pt-BR')}</span>
+                        <span class="level ${log.level}">${log.level}</span>
+                        <span class="message">${escapeHtml(log.message)}</span>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <p class="auto-refresh">🔄 Página atualiza automaticamente a cada 10 segundos</p>
+        </body>
+        </html>
+    `);
+});
+
+// Função auxiliar para escapar HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+// Endpoint para logs em JSON (para consumo por API)
+app.get('/logs/json', (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    const level = req.query.level;
+    
+    let filteredLogs = logHistory;
+    
+    if (level) {
+        filteredLogs = logHistory.filter(log => log.level === level.toUpperCase());
+    }
+    
+    res.json({
+        total: logHistory.length,
+        showing: Math.min(limit, filteredLogs.length),
+        logs: filteredLogs.slice(-limit).reverse()
+    });
+});
+
 // ========================================
 // INICIALIZAÇÃO
 // ========================================
