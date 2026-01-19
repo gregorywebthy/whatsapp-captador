@@ -229,9 +229,12 @@ async function connectToWhatsApp() {
             if (!msg.message) continue;
 
             try {
-                const contactJid = msg.key.remoteJid;
-                const contactNumber = contactJid.split('@')[0];
-
+                const contactJid = msg.key.remoteJid; // Ex: 5511999999999@s.whatsapp.net
+                const contactNumber = contactJid.split('@')[0]; // Remove @s.whatsapp.net
+                
+                // Formata o número (opcional - mantém apenas dígitos)
+                const cleanNumber = contactNumber.replace(/\D/g, ''); // Remove caracteres não numéricos - Apenas dígitos: 5511999999999
+                
                 // Extrai texto da mensagem
                 let messageText = 
                     msg.message.conversation ||
@@ -249,7 +252,7 @@ async function connectToWhatsApp() {
                 // Monta objeto de dados
                 const contactData = {
                     name: contactName,
-                    number: contactNumber,
+                    number: cleanNumber,
                     firstMessage: messageText,
                 };
                 /*
