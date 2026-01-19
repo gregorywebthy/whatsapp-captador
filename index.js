@@ -7,7 +7,7 @@ const pino = require('pino');
 // CONFIGURAÇÕES - ALTERE AQUI
 // ========================================
 const CONFIG = {
-    // URL do seu webhook no cPanel (você vai criar na Etapa 3)
+    // URL do seu webhook no cPanel
     WEBHOOK_URL: 'https://sistema.intergrass.com.br/whatsapp_captador/webhook-whatsapp.php',
     
     // Porta do servidor Express
