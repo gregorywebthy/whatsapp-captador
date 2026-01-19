@@ -227,7 +227,8 @@ async function connectToWhatsApp() {
 
             // Ignora mensagens do próprio número (verificação extra)
             const myNumber = sock.user.id.split(':')[0]; // Seu número
-            const contactJid = msg.key.remoteJid;
+            //const contactJid = msg.key.remoteJid;
+            const contactJid = msg.key.remoteJidAlt;
             const contactNumber = contactJid.split('@')[0];
             
             if (contactNumber === myNumber) {
