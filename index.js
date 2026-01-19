@@ -225,15 +225,22 @@ async function connectToWhatsApp() {
             // Ignora mensagens de grupos (opcional - remova se quiser captar grupos)
             if (msg.key.remoteJid.includes('@g.us')) continue;
 
-            // Ignora se não tiver conteúdo
-            if (!msg.message) continue;
+            // Ignora mensagens do próprio número (verificação extra)
+            const myNumber = sock.user.id.split(':')[0]; // Seu número
+            const contactJid = msg.key.remoteJid;
+            const contactNumber = contactJid.split('@')[0];
+            
+            if (contactNumber === myNumber) {
+                logger.debug(`⏭️ Ignorando mensagem do próprio número: ${myNumber}`);
+                continue;
+            }
 
             try {
-                const contactJid = msg.key.remoteJid; // Ex: 5511999999999@s.whatsapp.net
-                const contactNumber = contactJid.split('@')[0]; // Remove @s.whatsapp.net
+                //const contactJid = msg.key.remoteJid; // Ex: 5511999999999@s.whatsapp.net
+                //contactNumber = contactJid.split('@')[0]; // Remove @s.whatsapp.net
                 
                 // Formata o número (opcional - mantém apenas dígitos)
-                const cleanNumber = contactNumber.replace(/\D/g, ''); // Remove caracteres não numéricos - Apenas dígitos: 5511999999999
+                //const cleanNumber = contactNumber.replace(/\D/g, ''); // Remove caracteres não numéricos - Apenas dígitos: 5511999999999
                 
                 // Extrai texto da mensagem
                 let messageText = 
@@ -252,7 +259,7 @@ async function connectToWhatsApp() {
                 // Monta objeto de dados
                 const contactData = {
                     name: contactName,
-                    number: cleanNumber,
+                    number: contactNumber,
                     firstMessage: messageText,
                 };
                 /*
