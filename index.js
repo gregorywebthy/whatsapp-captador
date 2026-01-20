@@ -143,20 +143,6 @@ async function sendToWebhook(data) {
 }
 
 // ========================================
-// FUNÇÃO: OBTER FOTO DE PERFIL
-// ========================================
-/*
-async function getProfilePicture(sock, jid) {
-    try {
-        const profilePicUrl = await sock.profilePictureUrl(jid, 'image');
-        return profilePicUrl;
-    } catch (error) {
-        logger.debug(`Sem foto de perfil para ${jid}`);
-        return null;
-    }
-}
-*/
-// ========================================
 // FUNÇÃO: CONECTAR AO WHATSAPP
 // ========================================
 async function connectToWhatsApp() {
@@ -253,9 +239,6 @@ async function connectToWhatsApp() {
 
                 // Obtém nome do contato
                 const contactName = msg.pushName || contactNumber;
-
-                // Obtém foto de perfil
-                //const profilePicUrl = await getProfilePicture(sock, contactJid);
 
                 // Monta objeto de dados
                 const contactData = {
