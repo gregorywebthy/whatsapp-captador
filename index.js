@@ -213,7 +213,11 @@ async function connectToWhatsApp() {
 
             // Ignora mensagens do próprio número (verificação extra)
             const myNumber = sock.user.id.split(':')[0]; // Seu número
+            
+            // Primeira opcao para buscar o numero de telefone
             //const contactJid = msg.key.remoteJid;
+
+            //Segunda opcao de buscar o numero de telefone
             const contactJid = msg.key.remoteJidAlt;
             const contactNumber = contactJid.split('@')[0];
             
