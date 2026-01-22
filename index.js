@@ -121,7 +121,7 @@ async function sendToWebhook(data) {
                 'Content-Type': 'application/json',
                 'User-Agent': 'WhatsApp-Captador/1.0'
             },
-            timeout: 10000 // 10 segundos
+            timeout: 11000 // 11 segundos
         });
 
         if (response.status === 200) {
